@@ -28,16 +28,17 @@ A polished Dynatrace AppEngine app for creating, viewing, updating, and deleting
 ## Project Structure
 
 ```
-dynatrace-lookup-tables/
-├── app.config.ts                # dt-app CLI configuration
+dynatrace-lookup-table-manager/
+├── app.config.ts                # dt-app CLI configuration (git-ignored)
 ├── manifest.yaml                # Dynatrace app manifest (scopes, modules)
 ├── package.json                 # Dependencies & scripts
 ├── tsconfig.json                # TypeScript configuration
-├── index.html                   # HTML entry point
-└── src/
-    ├── index.tsx                # React entry – mounts the app
+└── ui/
+    ├── main.tsx                 # React entry – mounts the app
     ├── App.tsx                  # Root component with routing
     ├── types.ts                 # Shared TypeScript interfaces
+    ├── dynatrace.d.ts           # Dynatrace platform type declarations
+    ├── tsconfig.json            # UI-specific TypeScript config
     ├── api/
     │   ├── platformFetch.ts     # Low-level fetch wrapper for platform APIs
     │   ├── lookupTableService.ts# CRUD operations (list, upload, delete, preview)
@@ -50,6 +51,7 @@ dynatrace-lookup-tables/
     ├── components/
     │   ├── AppHeader.tsx        # Reusable page header
     │   ├── ConfirmDialog.tsx    # Delete confirmation modal
+    │   ├── DataPreviewPanel.tsx # Table data preview display
     │   ├── EmptyState.tsx       # Friendly "no data" placeholder
     │   ├── FileDropZone.tsx     # Drag-and-drop file selector
     │   ├── LoadingOverlay.tsx   # Spinner overlay
@@ -60,8 +62,12 @@ dynatrace-lookup-tables/
     │   ├── LookupTableDetailPage.tsx   # Single table detail/preview
     │   ├── UploadLookupTablePage.tsx   # Create / Update form
     │   └── index.ts
-    └── styles/
-        └── global.css           # Minimal global styles & animations
+    ├── utils/
+    │   └── dplInference.ts      # DPL parse-pattern inference logic
+    ├── styles/
+    │   └── global.css           # Minimal global styles & animations
+    └── assets/
+        └── logo.png.placeholder # App logo placeholder
 ```
 
 ---
@@ -80,8 +86,9 @@ dynatrace-lookup-tables/
 ## Setup
 
 ```bash
-# Clone or copy the project
-cd dynatrace-lookup-tables
+# Clone the project
+git clone https://github.com/SudoSmitty/dynatrace-lookup-table-manager.git
+cd dynatrace-lookup-table-manager
 
 # Install dependencies
 npm install
@@ -135,6 +142,10 @@ The deployment will:
 | `storage:files:write` | Upload / update lookup table files |
 | `storage:files:delete` | Delete lookup table files |
 | `storage:logs:read` | Execute DQL queries to list/preview data |
+| `storage:events:read` | DQL access to event data |
+| `storage:metrics:read` | DQL access to metric data |
+| `storage:entities:read` | DQL access to entity data |
+| `storage:bizevents:read` | DQL access to business event data |
 
 ---
 
