@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .dt-app/
+out/
 *.tgz
 *.log
 
