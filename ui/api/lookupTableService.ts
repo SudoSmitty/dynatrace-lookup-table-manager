@@ -145,9 +145,11 @@ export async function uploadLookupTable(
 
   // The "request" part must be sent as application/json within the multipart body.
   // Using a Blob ensures the correct Content-Type for this part.
+  // Include `overwrite` in the JSON body so the API recognises it.
+  const requestBody = overwrite ? { ...meta, overwrite: true } : meta;
   formData.append(
     "request",
-    new Blob([JSON.stringify(meta)], { type: "application/json" })
+    new Blob([JSON.stringify(requestBody)], { type: "application/json" })
   );
 
   // The "content" part is the actual data file.
