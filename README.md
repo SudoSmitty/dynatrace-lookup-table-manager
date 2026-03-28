@@ -138,14 +138,11 @@ The deployment will:
 
 | Scope | Purpose |
 |-------|---------|
-| `storage:files:read` | List and download lookup table files |
-| `storage:files:write` | Upload / update lookup table files |
+| `storage:files:read` | Read lookup table files from the Resource Store |
+| `storage:files:write` | Upload and update lookup table files |
 | `storage:files:delete` | Delete lookup table files |
-| `storage:logs:read` | Execute DQL queries to list/preview data |
-| `storage:events:read` | DQL access to event data |
-| `storage:metrics:read` | DQL access to metric data |
-| `storage:entities:read` | DQL access to entity data |
-| `storage:bizevents:read` | DQL access to business event data |
+| `storage:system:read` | Query dt.system.files to list lookup tables |
+| `storage:buckets:read` | Allow DQL queries to access Grail storage |
 
 ---
 
