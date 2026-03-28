@@ -1,0 +1,39 @@
+---
+# Dynatrace App Manifest
+# Declares the app metadata, required scopes, and UI modules.
+
+environmentUrl: "${ENVIRONMENT_URL}"
+
+app:
+  id: "my.lookup.table.manager"
+  name: "Lookup Table Manager"
+  version: "1.0.0"
+  description: >
+    A polished Dynatrace AppEngine application for managing
+    Grail lookup tables. List, create, update, and delete
+    lookup tables with ease.
+
+# OAuth scopes the app needs to function.
+# These are requested when the app is installed.
+scopes:
+  # Read files from the Grail Resource Store
+  - storage:files:read
+  # Write / upload files to the Grail Resource Store
+  - storage:files:write
+  # Delete files from the Grail Resource Store
+  - storage:files:delete
+  # Execute DQL queries (list files, preview table data)
+  - storage:logs:read
+  - storage:events:read
+  - storage:metrics:read
+  - storage:entities:read
+  - storage:bizevents:read
+  - environment:roles:viewer
+
+modules:
+  # The main UI module (Single-Page Application)
+  ui:
+    - name: Lookup Table Manager
+      description: Manage Dynatrace Grail lookup tables
+      path: /ui
+      role: app

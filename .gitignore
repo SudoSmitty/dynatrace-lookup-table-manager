@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.dt-app/
+*.tgz
+*.log
+
+# Environment / secrets
+.env
+.env.*
+app.config.ts
+
+# OS
+.DS_Store
+
+# Test
+coverage/
