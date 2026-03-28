@@ -1,35 +1,124 @@
 /**
  * global.css
  * ---------------------------------------------------------------------------
- * Minimal global styles and animations for the Lookup Table Manager app.
- * Most styling comes from the Strato Design System; these are supplemental.
+ * Modern, polished styles for the Lookup Table Manager app.
+ * Theme-aware: adapts to both light and dark mode via CSS custom properties.
  */
 
-/* Fade-in animation for notifications */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+/* -------------------------------------------------------------------------
+   Theme-aware custom properties
+   ------------------------------------------------------------------------- */
+
+:root {
+  /* Light mode defaults */
+  --ltm-card-bg: rgba(255, 255, 255, 0.85);
+  --ltm-card-border: rgba(0, 0, 0, 0.08);
+  --ltm-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --ltm-card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --ltm-accent-1: #6366f1;
+  --ltm-accent-2: #14b8a6;
+  --ltm-accent-soft-1: rgba(99, 102, 241, 0.10);
+  --ltm-accent-soft-2: rgba(20, 184, 166, 0.08);
+  --ltm-drop-bg: rgba(99, 102, 241, 0.04);
+  --ltm-table-header-bg: var(--dt-colors-surface-default, #f8f9fa);
+  --ltm-subtle-text: var(--dt-colors-text-neutral-default, #6b7280);
+}
+
+/* Dark mode overrides — Strato sets data-theme="dark" on <html> or <body> */
+[data-theme="dark"],
+[data-dt-theme="dark"],
+.dt-theme-dark,
+:root[style*="color-scheme: dark"],
+:root[data-theme="dark"] {
+  --ltm-card-bg: rgba(255, 255, 255, 0.04);
+  --ltm-card-border: rgba(255, 255, 255, 0.08);
+  --ltm-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --ltm-card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --ltm-accent-1: #818cf8;
+  --ltm-accent-2: #2dd4bf;
+  --ltm-accent-soft-1: rgba(129, 140, 248, 0.12);
+  --ltm-accent-soft-2: rgba(45, 212, 191, 0.10);
+  --ltm-drop-bg: rgba(129, 140, 248, 0.06);
+  --ltm-table-header-bg: rgba(255, 255, 255, 0.03);
+}
+
+/* Also detect prefers-color-scheme for when Strato uses system theme */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-dt-theme="light"]) {
+    --ltm-card-bg: rgba(255, 255, 255, 0.04);
+    --ltm-card-border: rgba(255, 255, 255, 0.08);
+    --ltm-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --ltm-card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --ltm-accent-1: #818cf8;
+    --ltm-accent-2: #2dd4bf;
+    --ltm-accent-soft-1: rgba(129, 140, 248, 0.12);
+    --ltm-accent-soft-2: rgba(45, 212, 191, 0.10);
+    --ltm-drop-bg: rgba(129, 140, 248, 0.06);
+    --ltm-table-header-bg: rgba(255, 255, 255, 0.03);
   }
 }
 
-/* Ensure the root element fills the viewport */
-html,
-body,
-#root {
+/* -------------------------------------------------------------------------
+   Animations
+   ------------------------------------------------------------------------- */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* -------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------- */
+
+html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
 /* Smooth transitions on interactive elements */
-button,
-a {
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+button, a {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 /* Subtle focus ring for accessibility */
@@ -42,7 +131,168 @@ a {
 code {
   font-family: "JetBrains Mono", "Fira Code", monospace;
   font-size: 0.875em;
-  background: var(--dt-colors-surface-neutral-subdued, #f4f5f7);
+  background: var(--ltm-accent-soft-1);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+/* -------------------------------------------------------------------------
+   Utility Classes
+   ------------------------------------------------------------------------- */
+
+.glass-card {
+  background: var(--ltm-card-bg);
+  border: 1px solid var(--ltm-card-border);
+  border-radius: 12px;
+  box-shadow: var(--ltm-card-shadow);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.glass-card:hover {
+  box-shadow: var(--ltm-card-shadow-hover);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--ltm-accent-1) 0%, var(--ltm-accent-2) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease infinite;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--ltm-accent-1) 0%, var(--ltm-accent-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.animate-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+
+/* -------------------------------------------------------------------------
+   Table wrapper — let Strato own table styles, just add framing
+   ------------------------------------------------------------------------- */
+
+.table-wrapper {
+  background: var(--ltm-card-bg);
+  border: 1px solid var(--ltm-card-border);
+  border-radius: 12px;
+  box-shadow: var(--ltm-card-shadow);
+  overflow: hidden;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
+.table-wrapper:hover {
+  box-shadow: var(--ltm-card-shadow-hover);
+}
+
+/* Force Strato virtualization container to fill the wrapper */
+.table-wrapper .strato-table-virtualization-container {
+  width: 100% !important;
+}
+
+
+
+/* -------------------------------------------------------------------------
+   Stats bar — responsive wrap
+   ------------------------------------------------------------------------- */
+
+.stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  animation: fadeInUp 0.3s ease 0.1s both;
+}
+
+.stat-card {
+  background: var(--ltm-card-bg);
+  border: 1px solid var(--ltm-card-border);
+  border-radius: 12px;
+  box-shadow: var(--ltm-card-shadow);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 160px;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.stat-card:hover {
+  box-shadow: var(--ltm-card-shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------------
+   Meta cards — responsive wrap for detail page
+   ------------------------------------------------------------------------- */
+
+.meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  animation: fadeInUp 0.3s ease 0.1s both;
+}
+
+.meta-card {
+  background: var(--ltm-card-bg);
+  border: 1px solid var(--ltm-card-border);
+  border-radius: 12px;
+  box-shadow: var(--ltm-card-shadow);
+  padding: 16px 20px;
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-width: 160px;
+}
+
+.meta-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.meta-card--purple::before {
+  background: linear-gradient(90deg, var(--ltm-accent-1), #8b5cf6);
+}
+
+.meta-card--teal::before {
+  background: linear-gradient(90deg, var(--ltm-accent-2), #06b6d4);
+}
+
+.meta-card--amber::before {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+/* -------------------------------------------------------------------------
+   Scrollbar
+   ------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ltm-card-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ltm-subtle-text);
 }

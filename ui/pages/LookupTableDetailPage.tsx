@@ -130,23 +130,21 @@ export const LookupTableDetailPage: React.FC = () => {
 
       <Flex flexDirection="column" padding={24} gap={20} style={{ flex: 1 }}>
         {/* Metadata bar */}
-        <Flex
-          flexDirection="row"
-          gap={32}
-          style={{
-            background: "var(--dt-colors-surface-default)",
-            borderRadius: 8,
-            padding: "16px 24px",
-            border: "1px solid var(--dt-colors-border-neutral-default)",
-          }}
-        >
-          <MetaChip label="File Path" value={filePath} />
-          <MetaChip label="Total Records" value={String(totalCount)} />
-          <MetaChip
-            label="Preview Rows"
-            value={`${rows.length}${rows.length >= 100 ? " (limited)" : ""}`}
-          />
-        </Flex>
+        <div className="meta-bar">
+          <div className="meta-card meta-card--purple">
+            <MetaChip label="File Path" value={filePath} icon="📁" />
+          </div>
+          <div className="meta-card meta-card--teal">
+            <MetaChip label="Total Records" value={String(totalCount)} icon="📊" />
+          </div>
+          <div className="meta-card meta-card--amber">
+            <MetaChip
+              label="Preview Rows"
+              value={`${rows.length}${rows.length >= 100 ? " (limited)" : ""}`}
+              icon="👁️"
+            />
+          </div>
+        </div>
 
         {/* Data preview */}
         {loading && <LoadingOverlay message="Loading table preview…" />}
@@ -171,11 +169,19 @@ export const LookupTableDetailPage: React.FC = () => {
         )}
 
         {!loading && !error && rows.length > 0 && (
-          <Flex flexDirection="column" gap={8}>
-            <Heading level={6}>Data Preview</Heading>
-            <DataTable data={rows} columns={columns} sortable resizable>
-              <DataTable.Pagination defaultPageSize={25} />
-            </DataTable>
+          <Flex
+            flexDirection="column"
+            gap={8}
+            style={{ animation: "fadeInUp 0.4s ease 0.2s both" }}
+          >
+            <Heading level={6}>
+              <span className="gradient-text">Data Preview</span>
+            </Heading>
+            <div className="table-wrapper">
+              <DataTable data={rows} columns={columns} sortable resizable fullWidth>
+                <DataTable.Pagination defaultPageSize={25} />
+              </DataTable>
+            </div>
           </Flex>
         )}
       </Flex>
@@ -198,22 +204,27 @@ export const LookupTableDetailPage: React.FC = () => {
 // Sub-components & helpers
 // ---------------------------------------------------------------------------
 
-const MetaChip: React.FC<{ label: string; value: string }> = ({
+const MetaChip: React.FC<{ label: string; value: string; icon?: string }> = ({
   label,
   value,
+  icon,
 }) => (
-  <Flex flexDirection="column" gap={2}>
-    <Text
-      style={{
-        fontSize: 11,
-        textTransform: "uppercase",
-        letterSpacing: "0.5px",
-        color: "var(--dt-colors-text-neutral-default)",
-      }}
-    >
-      {label}
-    </Text>
-    <Text style={{ fontWeight: 600 }}>{value}</Text>
+  <Flex flexDirection="row" gap={8} alignItems="center">
+    {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+    <Flex flexDirection="column" gap={2}>
+      <Text
+        style={{
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          color: "var(--ltm-subtle-text)",
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </Text>
+      <Text style={{ fontWeight: 700, fontSize: 14 }}>{value}</Text>
+    </Flex>
   </Flex>
 );
 

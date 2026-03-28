@@ -33,8 +33,25 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
   return (
     <Modal title={title} show={open} onDismiss={onCancel}>
-      <Flex flexDirection="column" gap={16} padding={8}>
-        <Text>{message}</Text>
+      <Flex flexDirection="column" gap={20} padding={8}>
+        <Flex flexDirection="row" gap={12} alignItems="flex-start">
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, rgba(220,53,69,0.12), rgba(220,53,69,0.06))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 20,
+              flexShrink: 0,
+            }}
+          >
+            ⚠️
+          </div>
+          <Text style={{ lineHeight: 1.6, paddingTop: 8 }}>{message}</Text>
+        </Flex>
         <Flex flexDirection="row" justifyContent="flex-end" gap={8}>
           <Button variant="default" onClick={onCancel} disabled={loading}>
             Cancel

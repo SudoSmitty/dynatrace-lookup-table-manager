@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#14b8a6"/>
+    </linearGradient>
+    <linearGradient id="tableGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.8)"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Subtle grid pattern overlay -->
+  <g opacity="0.06">
+    <line x1="0" y1="32" x2="128" y2="32" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="64" x2="128" y2="64" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="96" x2="128" y2="96" stroke="white" stroke-width="1"/>
+    <line x1="32" y1="0" x2="32" y2="128" stroke="white" stroke-width="1"/>
+    <line x1="64" y1="0" x2="64" y2="128" stroke="white" stroke-width="1"/>
+    <line x1="96" y1="0" x2="96" y2="128" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Table card -->
+  <g filter="url(#shadow)">
+    <rect x="18" y="24" width="72" height="68" rx="8" fill="url(#tableGrad)"/>
+
+    <!-- Table header row -->
+    <rect x="18" y="24" width="72" height="16" rx="8" fill="rgba(99,102,241,0.15)"/>
+    <rect x="18" y="36" width="72" height="4" rx="0" fill="rgba(99,102,241,0.15)"/>
+
+    <!-- Header dots (column indicators) -->
+    <circle cx="32" cy="32" r="3" fill="#6366f1" opacity="0.7"/>
+    <circle cx="52" cy="32" r="3" fill="#6366f1" opacity="0.7"/>
+    <circle cx="72" cy="32" r="3" fill="#6366f1" opacity="0.7"/>
+
+    <!-- Table rows -->
+    <rect x="26" y="46" width="18" height="3" rx="1.5" fill="#6366f1" opacity="0.35"/>
+    <rect x="50" y="46" width="12" height="3" rx="1.5" fill="#14b8a6" opacity="0.4"/>
+    <rect x="66" y="46" width="16" height="3" rx="1.5" fill="#6366f1" opacity="0.25"/>
+
+    <rect x="26" y="56" width="14" height="3" rx="1.5" fill="#6366f1" opacity="0.35"/>
+    <rect x="50" y="56" width="16" height="3" rx="1.5" fill="#14b8a6" opacity="0.4"/>
+    <rect x="66" y="56" width="10" height="3" rx="1.5" fill="#6366f1" opacity="0.25"/>
+
+    <rect x="26" y="66" width="20" height="3" rx="1.5" fill="#6366f1" opacity="0.35"/>
+    <rect x="50" y="66" width="10" height="3" rx="1.5" fill="#14b8a6" opacity="0.4"/>
+    <rect x="66" y="66" width="14" height="3" rx="1.5" fill="#6366f1" opacity="0.25"/>
+
+    <rect x="26" y="76" width="12" height="3" rx="1.5" fill="#6366f1" opacity="0.35"/>
+    <rect x="50" y="76" width="14" height="3" rx="1.5" fill="#14b8a6" opacity="0.4"/>
+    <rect x="66" y="76" width="18" height="3" rx="1.5" fill="#6366f1" opacity="0.25"/>
+  </g>
+
+  <!-- Magnifying glass -->
+  <g filter="url(#glow)" transform="translate(74, 62)">
+    <!-- Glass circle -->
+    <circle cx="18" cy="18" r="16" fill="rgba(255,255,255,0.95)" stroke="#14b8a6" stroke-width="3"/>
+    <!-- Inner highlight -->
+    <circle cx="14" cy="14" r="8" fill="none" stroke="white" stroke-width="2" opacity="0.5"/>
+    <!-- Key icon inside glass -->
+    <circle cx="18" cy="16" r="4" fill="none" stroke="#6366f1" stroke-width="2.5"/>
+    <line x1="18" y1="20" x2="18" y2="27" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="18" y1="25" x2="21" y2="23" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+    <!-- Handle -->
+    <line x1="30" y1="30" x2="40" y2="40" stroke="#14b8a6" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Sparkle accents -->
+  <g fill="white" opacity="0.7">
+    <path d="M104,18 L106,22 L110,24 L106,26 L104,30 L102,26 L98,24 L102,22 Z"/>
+    <path d="M16,100 L17.5,103 L20.5,104.5 L17.5,106 L16,109 L14.5,106 L11.5,104.5 L14.5,103 Z" transform="scale(0.8) translate(4,14)"/>
+  </g>
+</svg>

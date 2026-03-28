@@ -43,19 +43,25 @@ export const NotificationBar: React.FC<NotificationBarProps> = ({
         <div
           key={n.id}
           role="alert"
+          className="glass-card"
           style={{
             borderLeft: `4px solid ${colorMap[n.type] ?? colorMap.info}`,
-            background: "var(--dt-colors-background-surface-default)",
-            borderRadius: 6,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-            padding: "12px 16px",
+            padding: "14px 18px",
             display: "flex",
             alignItems: "flex-start",
             gap: 12,
-            animation: "fadeIn 0.2s ease",
-            border: "1px solid var(--dt-colors-border-neutral-default)",
+            animation: "slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.08)",
           }}
         >
+          <div style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: colorMap[n.type] ?? colorMap.info,
+            marginTop: 5,
+            flexShrink: 0,
+          }} />
           <Flex flexDirection="column" gap={2} style={{ flex: 1 }}>
             <strong style={{ fontSize: 14, color: "var(--dt-colors-text-neutral-default)" }}>{n.title}</strong>
             {n.message && (
@@ -63,6 +69,7 @@ export const NotificationBar: React.FC<NotificationBarProps> = ({
                 style={{
                   fontSize: 13,
                   color: "var(--dt-colors-text-neutral-subdued)",
+                  lineHeight: 1.4,
                 }}
               >
                 {n.message}
@@ -78,7 +85,9 @@ export const NotificationBar: React.FC<NotificationBarProps> = ({
               fontSize: 18,
               lineHeight: 1,
               color: "var(--dt-colors-text-neutral-default)",
-              padding: 0,
+              padding: "2px 4px",
+              borderRadius: 4,
+              transition: "background 0.15s ease",
             }}
             aria-label="Dismiss notification"
           >

@@ -41,8 +41,10 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
   if (columns.length === 0) return null;
 
   return (
-    <Flex flexDirection="column" gap={16}>
-      <Heading level={6}>Detected Columns &amp; DPL Types</Heading>
+    <Flex flexDirection="column" gap={16} style={{ animation: "fadeInUp 0.4s ease both" }}>
+      <Heading level={6}>
+        <span className="gradient-text">Detected Columns &amp; DPL Types</span>
+      </Heading>
       <Text style={{ fontSize: 12, color: "var(--dt-colors-text-neutral-default)" }}>
         Each column's data type has been auto-detected from sample values.
         All columns import as LD (line data) by default for maximum compatibility.
@@ -51,9 +53,8 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
 
       {/* Column table */}
       <div
+        className="glass-card"
         style={{
-          border: "1px solid var(--dt-colors-border-neutral-default)",
-          borderRadius: 6,
           overflow: "auto",
           maxHeight: 420,
         }}
@@ -68,7 +69,7 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
           <thead>
             <tr
               style={{
-                background: "var(--dt-colors-background-surface-default)",
+                background: "var(--ltm-table-header-bg)",
                 position: "sticky",
                 top: 0,
                 zIndex: 1,
@@ -91,8 +92,8 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
                     style={{
                       fontSize: 11,
                       fontWeight: 600,
-                      color: "var(--dt-colors-text-primary-default)",
-                      background: "var(--dt-colors-background-surface-default)",
+                      color: "var(--ltm-accent-1)",
+                      background: "var(--ltm-accent-soft-1)",
                       borderRadius: 4,
                       padding: "2px 8px",
                       display: "inline-block",
@@ -144,15 +145,13 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
           Generated Parse Pattern
         </Text>
         <div
+          className="glass-card"
           style={{
-            background: "var(--dt-colors-background-surface-default)",
-            borderRadius: 4,
-            padding: "8px 12px",
-            fontFamily: "monospace",
+            padding: "10px 14px",
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             fontSize: 12,
             wordBreak: "break-all",
             color: "var(--dt-colors-text-neutral-default)",
-            border: "1px solid var(--dt-colors-border-neutral-default)",
           }}
         >
           {parsePattern}

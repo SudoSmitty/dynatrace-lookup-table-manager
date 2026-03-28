@@ -61,21 +61,23 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
       onClick={() => !disabled && inputRef.current?.click()}
+      className="glass-card"
       style={{
         border: `2px dashed ${
           dragActive
-            ? "var(--dt-colors-border-accent-default, #1496ff)"
-            : "var(--dt-colors-border-neutral-default, #ccc)"
+            ? "var(--ltm-accent-1)"
+            : "var(--ltm-card-border)"
         }`,
-        borderRadius: 8,
-        padding: "32px 16px",
+        borderRadius: 12,
+        padding: "40px 24px",
         textAlign: "center",
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
         background: dragActive
-          ? "var(--dt-colors-surface-accent-subdued, rgba(20,150,255,0.05))"
-          : "var(--dt-colors-surface-default, transparent)",
-        transition: "border-color 0.2s, background 0.2s",
+          ? "var(--ltm-drop-bg)"
+          : "transparent",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transform: dragActive ? "scale(1.01)" : "scale(1)",
       }}
     >
       <input
@@ -86,15 +88,31 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
         style={{ display: "none" }}
         disabled={disabled}
       />
-      <Flex flexDirection="column" alignItems="center" gap={8}>
-        <Text style={{ fontSize: 28 }}>📂</Text>
+      <Flex flexDirection="column" alignItems="center" gap={12}>
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, var(--ltm-accent-soft-1), var(--ltm-accent-soft-2))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 24,
+            transition: "transform 0.3s ease",
+            transform: dragActive ? "scale(1.15)" : "scale(1)",
+          }}
+        >
+          {selectedFileName ? "✅" : "📂"}
+        </div>
         {selectedFileName ? (
-          <Text>
-            <strong>{selectedFileName}</strong> selected
-          </Text>
+          <Flex flexDirection="column" alignItems="center" gap={4}>
+            <Text style={{ fontWeight: 700, fontSize: 15 }}>{selectedFileName}</Text>
+            <Text style={{ fontSize: 12, color: "var(--dt-colors-text-neutral-default)" }}>Click or drop to replace</Text>
+          </Flex>
         ) : (
           <>
-            <Text style={{ fontWeight: 600 }}>
+            <Text style={{ fontWeight: 600, fontSize: 15 }}>
               Drag & drop a file here, or click to browse
             </Text>
             <Text
