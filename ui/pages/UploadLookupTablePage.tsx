@@ -234,8 +234,17 @@ export const UploadLookupTablePage: React.FC = () => {
         flexDirection="column"
         padding={24}
         gap={24}
-        style={{ flex: 1, maxWidth: 720, margin: "0 auto", width: "100%" }}
+        style={{
+          flex: 1,
+          maxWidth: 720,
+          margin: "0 auto",
+          width: "100%",
+          animation: "fadeInUp 0.4s ease 0.1s both",
+        }}
       >
+        {/* Form card container */}
+        <div className="glass-card" style={{ padding: "28px 32px" }}>
+          <Flex flexDirection="column" gap={24}>
         {/* Table name (only for create mode) */}
         {!isUpdate && (
           <FormField>
@@ -333,13 +342,18 @@ export const UploadLookupTablePage: React.FC = () => {
 
         {/* File upload */}
         <Flex flexDirection="column" gap={8}>
-          <Heading level={6}>Data File *</Heading>
+          <Heading level={6}>
+            <span className="gradient-text">Data File *</span>
+          </Heading>
           <FileDropZone
             onFileSelected={handleFileSelected}
             selectedFileName={file?.name}
             disabled={submitting}
           />
         </Flex>
+
+          </Flex>{/* end form card inner */}
+        </div>{/* end glass-card */}
 
         {/* Column inference preview (CSV only) */}
         {fileFormat === "csv" && (analyzing || inferredColumns.length > 0) && (
@@ -353,21 +367,21 @@ export const UploadLookupTablePage: React.FC = () => {
 
         {/* Validation errors */}
         {validationErrors.length > 0 && (
-          <Flex
-            flexDirection="column"
-            gap={4}
+          <div
+            className="glass-card"
             style={{
-              background: "var(--dt-colors-background-critical-subdued)",
-              borderRadius: 6,
               padding: "12px 16px",
+              borderLeft: "4px solid var(--dt-colors-charts-status-critical-default, #dc3545)",
             }}
           >
-            {validationErrors.map((e, i) => (
-              <Text key={i} style={{ color: "var(--dt-colors-text-critical-default)" }}>
-                • {e}
-              </Text>
-            ))}
-          </Flex>
+            <Flex flexDirection="column" gap={4}>
+              {validationErrors.map((e, i) => (
+                <Text key={i} style={{ color: "var(--dt-colors-text-critical-default)", fontSize: 13 }}>
+                  • {e}
+                </Text>
+              ))}
+            </Flex>
+          </div>
         )}
 
         {/* Action buttons */}

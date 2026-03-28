@@ -20,10 +20,24 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     flexDirection="column"
     alignItems="center"
     justifyContent="center"
-    gap={16}
-    padding={48}
+    gap={20}
+    padding={64}
+    style={{ animation: "fadeInScale 0.3s ease both" }}
   >
-    <ProgressCircle />
-    <Text>{message}</Text>
+    <div
+      style={{
+        width: 56,
+        height: 56,
+        borderRadius: "50%",
+        background: "linear-gradient(135deg, var(--ltm-accent-soft-1), var(--ltm-accent-soft-2))",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        animation: "pulse 1.5s ease-in-out infinite",
+      }}
+    >
+      <ProgressCircle />
+    </div>
+    <Text style={{ fontWeight: 500, letterSpacing: "0.01em" }}>{message}</Text>
   </Flex>
 );

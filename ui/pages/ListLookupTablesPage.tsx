@@ -99,7 +99,12 @@ export const ListLookupTablesPage: React.FC = () => {
         width: "2fr",
         cell: ({ value, rowData }: { value: string; rowData: LookupTableMeta }) => (
           <Text
-            style={{ cursor: "pointer", fontWeight: 600 }}
+            style={{
+              cursor: "pointer",
+              fontWeight: 600,
+              color: "var(--ltm-accent-1)",
+              transition: "opacity 0.15s ease",
+            }}
             onClick={() => handleView(rowData)}
           >
             {value || rowData.filePath}
@@ -111,6 +116,11 @@ export const ListLookupTablesPage: React.FC = () => {
         header: "File Path",
         accessor: "filePath",
         width: "2fr",
+        cell: ({ value }: { value: string }) => (
+          <Text style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, opacity: 0.8 }}>
+            {value}
+          </Text>
+        ),
       },
       {
         id: "sizeBytes",
@@ -138,7 +148,7 @@ export const ListLookupTablesPage: React.FC = () => {
         cell: ({ rowData }: { rowData: LookupTableMeta }) => (
           <Flex flexDirection="row" gap={4}>
             <Button
-              variant="emphasized"
+              variant="default"
               onClick={() => handleView(rowData)}
             >
               View
@@ -181,6 +191,45 @@ export const ListLookupTablesPage: React.FC = () => {
         }
       />
 
+      {/* Stats bar */}
+      {!loading && !error && tables.length > 0 && (
+        <div className="stats-bar">
+          <div className="stat-card">
+            <span style={{ fontSize: 20 }}>📊</span>
+            <Flex flexDirection="column" gap={0}>
+              <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ltm-subtle-text)" }}>
+                Tables
+              </Text>
+              <Text style={{ fontSize: 20, fontWeight: 700 }}>{tables.length}</Text>
+            </Flex>
+          </div>
+          <div className="stat-card">
+            <span style={{ fontSize: 20 }}>💾</span>
+            <Flex flexDirection="column" gap={0}>
+              <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ltm-subtle-text)" }}>
+                Total Size
+              </Text>
+              <Text style={{ fontSize: 20, fontWeight: 700 }}>
+                {formatBytes(tables.reduce((sum, t) => sum + (t.sizeBytes || 0), 0))}
+              </Text>
+            </Flex>
+          </div>
+          <div className="stat-card">
+            <span style={{ fontSize: 20 }}>🕐</span>
+            <Flex flexDirection="column" gap={0}>
+              <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ltm-subtle-text)" }}>
+                Last Updated
+              </Text>
+              <Text style={{ fontSize: 14, fontWeight: 600 }}>
+                {tables.length > 0 && tables[0].lastModified
+                  ? new Date(tables[0].lastModified).toLocaleDateString()
+                  : "—"}
+              </Text>
+            </Flex>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <Flex
         flexDirection="row"
@@ -188,6 +237,7 @@ export const ListLookupTablesPage: React.FC = () => {
         alignItems="center"
         padding={16}
         gap={12}
+        style={{ animation: "fadeInUp 0.3s ease 0.15s both" }}
       >
         <div style={{ flex: 1, maxWidth: 400 }}>
           <TextInput
@@ -202,7 +252,11 @@ export const ListLookupTablesPage: React.FC = () => {
       </Flex>
 
       {/* Content area */}
-      <Flex flexDirection="column" padding={16} style={{ flex: 1 }}>
+      <Flex
+        flexDirection="column"
+        padding={16}
+        style={{ flex: 1, animation: "fadeInUp 0.4s ease 0.2s both" }}
+      >
         {loading && <LoadingOverlay message="Loading lookup tables…" />}
 
         {error && !loading && (
@@ -236,9 +290,11 @@ export const ListLookupTablesPage: React.FC = () => {
         )}
 
         {!loading && !error && tables.length > 0 && (
-          <DataTable data={tables} columns={columns} sortable resizable>
-            <DataTable.Pagination defaultPageSize={20} />
-          </DataTable>
+          <div className="table-wrapper">
+            <DataTable data={tables} columns={columns} sortable resizable fullWidth>
+              <DataTable.Pagination defaultPageSize={20} />
+            </DataTable>
+          </div>
         )}
       </Flex>
 
