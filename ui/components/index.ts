@@ -4,4 +4,6 @@ export { DataPreviewPanel } from "./DataPreviewPanel";
 export { EmptyState } from "./EmptyState";
 export { FileDropZone } from "./FileDropZone";
 export { LoadingOverlay } from "./LoadingOverlay";
+export { LookupTreeSidebar } from "./LookupTreeSidebar";
 export { NotificationBar } from "./NotificationBar";
+export { TableDetailPanel } from "./TableDetailPanel";

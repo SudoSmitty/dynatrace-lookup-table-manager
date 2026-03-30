@@ -16,6 +16,7 @@ import { Flex } from "@dynatrace/strato-components-preview/layouts";
 import { Heading, Text } from "@dynatrace/strato-components/typography";
 
 import { deleteLookupTable } from "../api";
+import { IconFile, IconHash, IconEye } from "../components/Icons";
 import { useLookupPreview, useNotifications } from "../hooks";
 import {
   AppHeader,
@@ -44,17 +45,34 @@ export const LookupTableDetailPage: React.FC = () => {
   const columns = useMemo<DataTableColumnDef<Record<string, unknown>>[]>(() => {
     if (rows.length === 0) return [];
     const keys = Object.keys(rows[0]);
-    return keys.map((key) => ({
-      id: key,
-      header: key,
-      accessor: key,
-      width: "1fr" as const,
-      cell: ({ value }: { value: unknown }) => (
-        <Text style={{ wordBreak: "break-all" }}>
-          {value === null || value === undefined ? "—" : String(value)}
-        </Text>
-      ),
-    }));
+    return keys.map((key) => {
+      const grailType = inferGrailType(key, rows);
+      return {
+        id: key,
+        header: () => (
+          <Flex flexDirection="row" alignItems="center" gap={6}>
+            <Text style={{ fontWeight: 600 }}>{key}</Text>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: "var(--dt-colors-text-neutral-default)",
+                opacity: 0.7,
+              }}
+            >
+              {grailType}
+            </Text>
+          </Flex>
+        ),
+        accessor: key,
+        width: "1fr" as const,
+        cell: ({ value }: { value: unknown }) => (
+          <Text style={{ wordBreak: "break-all" }}>
+            {value === null || value === undefined ? "—" : String(value)}
+          </Text>
+        ),
+      };
+    });
   }, [rows]);
 
   // ---------------------------------------------------------------------------
@@ -132,16 +150,16 @@ export const LookupTableDetailPage: React.FC = () => {
         {/* Metadata bar */}
         <div className="meta-bar">
           <div className="meta-card meta-card--purple">
-            <MetaChip label="File Path" value={filePath} icon="📁" />
+            <MetaChip label="File Path" value={filePath} icon={<IconFile size={18} color="var(--ltm-accent-1)" />} />
           </div>
           <div className="meta-card meta-card--teal">
-            <MetaChip label="Total Records" value={String(totalCount)} icon="📊" />
+            <MetaChip label="Total Records" value={String(totalCount)} icon={<IconHash size={18} color="var(--ltm-accent-2)" />} />
           </div>
           <div className="meta-card meta-card--amber">
             <MetaChip
               label="Preview Rows"
               value={`${rows.length}${rows.length >= 100 ? " (limited)" : ""}`}
-              icon="👁️"
+              icon={<IconEye size={18} color="#f59e0b" />}
             />
           </div>
         </div>
@@ -204,13 +222,13 @@ export const LookupTableDetailPage: React.FC = () => {
 // Sub-components & helpers
 // ---------------------------------------------------------------------------
 
-const MetaChip: React.FC<{ label: string; value: string; icon?: string }> = ({
+const MetaChip: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({
   label,
   value,
   icon,
 }) => (
   <Flex flexDirection="row" gap={8} alignItems="center">
-    {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+    {icon && <span style={{ flexShrink: 0, display: "flex" }}>{icon}</span>}
     <Flex flexDirection="column" gap={2}>
       <Text
         style={{
@@ -232,4 +250,49 @@ function extractName(filePath: string): string {
   const parts = filePath.split("/").filter(Boolean);
   const filename = parts[parts.length - 1] ?? filePath;
   return filename.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ");
+}
+
+/** Infer a Grail-style type label from the actual values in row data. */
+function inferGrailType(
+  key: string,
+  rows: Record<string, unknown>[]
+): string {
+  const samples = rows
+    .slice(0, 50)
+    .map((r) => r[key])
+    .filter((v) => v != null);
+  if (samples.length === 0) return "STRING";
+
+  // Check JS types from the DQL response
+  const jsTypes = new Set(samples.map((v) => typeof v));
+
+  if (jsTypes.size === 1) {
+    const t = jsTypes.values().next().value;
+    if (t === "boolean") return "BOOLEAN";
+    if (t === "number") {
+      const allInt = samples.every((v) => Number.isInteger(v));
+      return allInt ? "LONG" : "DOUBLE";
+    }
+  }
+
+  // If all strings, try to detect common patterns
+  if (jsTypes.size === 1 && jsTypes.has("string")) {
+    const strs = samples as string[];
+    const RE_IPV4 =
+      /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+    const RE_TS =
+      /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+    const nonEmpty = strs.filter(Boolean);
+    if (nonEmpty.length > 0) {
+      if (nonEmpty.every((s) => RE_IPV4.test(s))) return "IP_ADDRESS";
+      if (nonEmpty.every((s) => RE_TS.test(s))) return "TIMESTAMP";
+    }
+    return "STRING";
+  }
+
+  // Arrays
+  if (samples.some((v) => Array.isArray(v))) return "ARRAY";
+
+  return "STRING";
 }

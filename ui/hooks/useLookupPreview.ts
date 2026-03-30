@@ -17,8 +17,7 @@ export interface UseLookupPreviewResult {
 }
 
 export function useLookupPreview(
-  filePath: string | null,
-  limit = 100
+  filePath: string | null
 ): UseLookupPreviewResult {
   const [rows, setRows] = useState<LookupRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -32,7 +31,7 @@ export function useLookupPreview(
     setError(null);
     try {
       const [data, count] = await Promise.all([
-        previewLookupTable(filePath, limit),
+        previewLookupTable(filePath),
         countLookupRows(filePath),
       ]);
       if (mountedRef.current) {
@@ -48,7 +47,7 @@ export function useLookupPreview(
         setLoading(false);
       }
     }
-  }, [filePath, limit]);
+  }, [filePath]);
 
   useEffect(() => {
     mountedRef.current = true;

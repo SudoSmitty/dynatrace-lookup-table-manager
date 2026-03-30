@@ -35,14 +35,15 @@ import {
 } from "../components";
 import type { LookupUploadRequest } from "../types";
 import type { InferredColumn, DplType } from "../utils/dplInference";
-import { inferColumns, buildCsvParsePattern } from "../utils/dplInference";
+import { inferColumns, buildCsvParsePattern, convertXmlToJsonl } from "../utils/dplInference";
 
-type FileFormat = "csv" | "jsonl" | "json";
+type FileFormat = "csv" | "jsonl" | "json" | "xml";
 
 const FILE_FORMAT_OPTIONS: { value: FileFormat; label: string }[] = [
   { value: "csv", label: "CSV (comma-separated)" },
   { value: "jsonl", label: "JSON Lines (.jsonl)" },
   { value: "json", label: "JSON" },
+  { value: "xml", label: "XML" },
 ];
 
 /** Map file format to the DPL parse pattern Dynatrace expects.
@@ -60,6 +61,9 @@ function getParsePattern(format: FileFormat, lookupField: string): string {
       return `JSON:${lookupField}`;
     case "json":
       return `JSON:${lookupField}`;
+    case "xml":
+      // XML is converted to JSONL before upload, so use JSON pattern
+      return `JSON:${lookupField}`;
   }
 }
 
@@ -68,6 +72,7 @@ function detectFormat(filename: string): FileFormat {
   const ext = filename.split(".").pop()?.toLowerCase();
   if (ext === "jsonl" || ext === "ndjson") return "jsonl";
   if (ext === "json") return "json";
+  if (ext === "xml") return "xml";
   return "csv";
 }
 
@@ -103,17 +108,15 @@ export const UploadLookupTablePage: React.FC = () => {
     if (f) {
       const fmt = detectFormat(f.name);
       setFileFormat(fmt);
-      // Only run column inference for CSV — JSON/JSONL are parsed automatically
-      if (fmt === "csv") {
-        setAnalyzing(true);
-        try {
-          const cols = await inferColumns(f, fmt);
-          setInferredColumns(cols);
-        } catch {
-          // inference is best-effort; fall back silently
-        } finally {
-          setAnalyzing(false);
-        }
+      // Run column inference for all formats to show data preview
+      setAnalyzing(true);
+      try {
+        const cols = await inferColumns(f, fmt);
+        setInferredColumns(cols);
+      } catch {
+        // inference is best-effort; fall back silently
+      } finally {
+        setAnalyzing(false);
       }
     }
   }, []);
@@ -186,7 +189,22 @@ export const UploadLookupTablePage: React.FC = () => {
     setSubmitting(true);
     try {
       const meta = buildMeta();
-      const result = await uploadLookupTable(meta, file, isUpdate);
+
+      // For XML, convert to JSONL before uploading since the lookup:upload
+      // API needs individual records (XML:xml produces a single nested object).
+      let uploadFile = file;
+      if (fileFormat === "xml") {
+        const text = await file.text();
+        const jsonl = convertXmlToJsonl(text);
+        if (!jsonl) {
+          throw new Error("Could not parse XML — ensure it has repeating elements.");
+        }
+        uploadFile = new File([jsonl], file.name.replace(/\.xml$/i, ".jsonl"), {
+          type: "application/x-ndjson",
+        });
+      }
+
+      const result = await uploadLookupTable(meta, uploadFile, isUpdate);
       const resultPath = result.filePath || meta.filePath;
       addNotification(
         "success",
@@ -355,13 +373,19 @@ export const UploadLookupTablePage: React.FC = () => {
           </Flex>{/* end form card inner */}
         </div>{/* end glass-card */}
 
-        {/* Column inference preview (CSV only) */}
-        {fileFormat === "csv" && (analyzing || inferredColumns.length > 0) && (
+        {/* Column inference preview */}
+        {(analyzing || inferredColumns.length > 0) && (
           <DataPreviewPanel
             columns={inferredColumns}
             loading={analyzing}
             onTypeChange={handleTypeChange}
             parsePattern={computedParsePattern}
+            readOnly={fileFormat !== "csv"}
+            formatHint={
+              fileFormat === "xml"
+                ? "XML is automatically converted to JSON Lines for upload."
+                : undefined
+            }
           />
         )}
 

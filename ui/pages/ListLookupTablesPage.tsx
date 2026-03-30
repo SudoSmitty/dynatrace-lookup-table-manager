@@ -1,67 +1,136 @@
 /**
  * pages/ListLookupTablesPage.tsx
  * ---------------------------------------------------------------------------
- * Main page: displays all lookup tables in a searchable, sortable DataTable.
- * Provides actions to Create, View, Update, and Delete tables.
+ * Main page: split layout with a tree sidebar on the left and an inline
+ * detail/preview panel on the right. Supports view, update, delete, and
+ * export actions via the tree's context menu.
  */
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  DataTable,
-  type DataTableColumnDef,
-} from "@dynatrace/strato-components-preview/tables";
 import { Button } from "@dynatrace/strato-components-preview/buttons";
-import { TextInput } from "@dynatrace/strato-components-preview/forms";
 import { Flex } from "@dynatrace/strato-components-preview/layouts";
 import { Text } from "@dynatrace/strato-components/typography";
 
-import { deleteLookupTable } from "../api";
-import { useLookupTables, useNotifications } from "../hooks";
+import { deleteLookupTable, previewLookupTable } from "../api";
+import { IconTable, IconHdd, IconClock, IconClipboard } from "../components/Icons";
+import { useLookupTables, useLookupPreview, useNotifications } from "../hooks";
 import {
   AppHeader,
   ConfirmDialog,
   EmptyState,
-  LoadingOverlay,
+  LookupTreeSidebar,
   NotificationBar,
+  TableDetailPanel,
 } from "../components";
-import type { LookupTableMeta } from "../types";
+import type { TreeAction } from "../components/LookupTreeSidebar";
+import type { LookupTableMeta, LookupRow } from "../types";
 
 export const ListLookupTablesPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Search / filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const { tables, loading, error, refresh } = useLookupTables(
-    searchTerm || undefined
-  );
-
-  // Notification system
+  const { tables, loading, error, refresh } = useLookupTables();
   const { notifications, addNotification, dismiss } = useNotifications();
 
-  // Delete confirmation dialog
-  const [deleteTarget, setDeleteTarget] = useState<LookupTableMeta | null>(
-    null
-  );
+  // Selected table in the tree
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const {
+    rows,
+    totalCount,
+    loading: previewLoading,
+    error: previewError,
+    refresh: refreshPreview,
+  } = useLookupPreview(selectedPath);
+
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<LookupTableMeta | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // ---------------------------------------------------------------------------
-  // Handlers
+  // Export helpers
   // ---------------------------------------------------------------------------
 
-  const handleView = useCallback(
-    (table: LookupTableMeta) => {
-      navigate(`/detail?path=${encodeURIComponent(table.filePath)}`);
+  const exportData = useCallback(
+    async (table: LookupTableMeta, format: "csv" | "json") => {
+      try {
+        const data = await previewLookupTable(table.filePath);
+        if (data.length === 0) {
+          addNotification("warning", "No data", "Table has no records to export.");
+          return;
+        }
+
+        let content: string;
+        let mimeType: string;
+        let ext: string;
+
+        if (format === "csv") {
+          const keys = Object.keys(data[0]);
+          const header = keys.map(escapeCsvField).join(",");
+          const rows = data.map((row) =>
+            keys.map((k) => escapeCsvField(String(row[k] ?? ""))).join(",")
+          );
+          content = [header, ...rows].join("\n");
+          mimeType = "text/csv";
+          ext = "csv";
+        } else {
+          content = JSON.stringify(data, null, 2);
+          mimeType = "application/json";
+          ext = "json";
+        }
+
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const name = table.filePath.split("/").filter(Boolean).pop() ?? "export";
+        a.download = `${name}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addNotification("success", "Exported", `${data.length} records exported as ${ext.toUpperCase()}.`);
+      } catch (err: unknown) {
+        addNotification(
+          "critical",
+          "Export failed",
+          err instanceof Error ? err.message : String(err)
+        );
+      }
     },
-    [navigate]
+    [addNotification]
   );
 
-  const handleUpdate = useCallback(
-    (table: LookupTableMeta) => {
-      navigate(`/upload?path=${encodeURIComponent(table.filePath)}`);
+  // ---------------------------------------------------------------------------
+  // Tree action handler
+  // ---------------------------------------------------------------------------
+
+  const handleTreeAction = useCallback(
+    (action: TreeAction, table: LookupTableMeta) => {
+      switch (action) {
+        case "view":
+          setSelectedPath(table.filePath);
+          break;
+        case "update":
+          navigate(`/upload?path=${encodeURIComponent(table.filePath)}`);
+          break;
+        case "delete":
+          setDeleteTarget(table);
+          break;
+        case "export-csv":
+          exportData(table, "csv");
+          break;
+        case "export-json":
+          exportData(table, "json");
+          break;
+      }
     },
-    [navigate]
+    [navigate, exportData]
   );
+
+  // ---------------------------------------------------------------------------
+  // Delete handler
+  // ---------------------------------------------------------------------------
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
@@ -73,6 +142,9 @@ export const ListLookupTablesPage: React.FC = () => {
         "Table deleted",
         `"${deleteTarget.displayName || deleteTarget.filePath}" was removed.`
       );
+      if (selectedPath === deleteTarget.filePath) {
+        setSelectedPath(null);
+      }
       refresh();
     } catch (err: unknown) {
       addNotification(
@@ -84,110 +156,28 @@ export const ListLookupTablesPage: React.FC = () => {
       setDeleting(false);
       setDeleteTarget(null);
     }
-  }, [deleteTarget, addNotification, refresh]);
-
-  // ---------------------------------------------------------------------------
-  // Table columns
-  // ---------------------------------------------------------------------------
-
-  const columns = useMemo<DataTableColumnDef<LookupTableMeta>[]>(
-    () => [
-      {
-        id: "displayName",
-        header: "Name",
-        accessor: "displayName",
-        width: "2fr",
-        cell: ({ value, rowData }: { value: string; rowData: LookupTableMeta }) => (
-          <Text
-            style={{
-              cursor: "pointer",
-              fontWeight: 600,
-              color: "var(--ltm-accent-1)",
-              transition: "opacity 0.15s ease",
-            }}
-            onClick={() => handleView(rowData)}
-          >
-            {value || rowData.filePath}
-          </Text>
-        ),
-      },
-      {
-        id: "filePath",
-        header: "File Path",
-        accessor: "filePath",
-        width: "2fr",
-        cell: ({ value }: { value: string }) => (
-          <Text style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, opacity: 0.8 }}>
-            {value}
-          </Text>
-        ),
-      },
-      {
-        id: "sizeBytes",
-        header: "Size",
-        accessor: "sizeBytes",
-        width: "1fr",
-        cell: ({ value }: { value: number }) => (
-          <Text>{formatBytes(value)}</Text>
-        ),
-      },
-      {
-        id: "lastModified",
-        header: "Last Modified",
-        accessor: "lastModified",
-        width: "1.5fr",
-        cell: ({ value }: { value: string }) => (
-          <Text>{value ? new Date(value).toLocaleString() : "—"}</Text>
-        ),
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        accessor: "filePath",
-        width: "1.5fr",
-        cell: ({ rowData }: { rowData: LookupTableMeta }) => (
-          <Flex flexDirection="row" gap={4}>
-            <Button
-              variant="default"
-              onClick={() => handleView(rowData)}
-            >
-              View
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => handleUpdate(rowData)}
-            >
-              Update
-            </Button>
-            <Button
-              variant="default"
-              color="critical"
-              onClick={() => setDeleteTarget(rowData)}
-            >
-              Delete
-            </Button>
-          </Flex>
-        ),
-      },
-    ],
-    [handleView, handleUpdate]
-  );
+  }, [deleteTarget, selectedPath, addNotification, refresh]);
 
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
-    <Flex flexDirection="column" style={{ height: "100%", minHeight: "100vh" }}>
+    <Flex flexDirection="column" style={{ height: "100vh", overflow: "hidden" }}>
       <NotificationBar notifications={notifications} onDismiss={dismiss} />
 
       <AppHeader
         title="Lookup Table Manager"
         subtitle="Create, view, update, and delete Dynatrace Grail lookup tables"
         actions={
-          <Button variant="accent" onClick={() => navigate("/upload")}>
-            + New Lookup Table
-          </Button>
+          <Flex flexDirection="row" gap={8}>
+            <Button variant="default" onClick={refresh}>
+              Refresh
+            </Button>
+            <Button variant="accent" onClick={() => navigate("/upload")}>
+              + New Lookup Table
+            </Button>
+          </Flex>
         }
       />
 
@@ -195,7 +185,7 @@ export const ListLookupTablesPage: React.FC = () => {
       {!loading && !error && tables.length > 0 && (
         <div className="stats-bar">
           <div className="stat-card">
-            <span style={{ fontSize: 20 }}>📊</span>
+            <IconTable size={20} color="var(--ltm-accent-1)" />
             <Flex flexDirection="column" gap={0}>
               <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ltm-subtle-text)" }}>
                 Tables
@@ -204,7 +194,7 @@ export const ListLookupTablesPage: React.FC = () => {
             </Flex>
           </div>
           <div className="stat-card">
-            <span style={{ fontSize: 20 }}>💾</span>
+            <IconHdd size={20} color="var(--ltm-accent-2)" />
             <Flex flexDirection="column" gap={0}>
               <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ltm-subtle-text)" }}>
                 Total Size
@@ -215,13 +205,13 @@ export const ListLookupTablesPage: React.FC = () => {
             </Flex>
           </div>
           <div className="stat-card">
-            <span style={{ fontSize: 20 }}>🕐</span>
+            <IconClock size={20} color="#f59e0b" />
             <Flex flexDirection="column" gap={0}>
               <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ltm-subtle-text)" }}>
                 Last Updated
               </Text>
               <Text style={{ fontSize: 14, fontWeight: 600 }}>
-                {tables.length > 0 && tables[0].lastModified
+                {tables[0]?.lastModified
                   ? new Date(tables[0].lastModified).toLocaleDateString()
                   : "—"}
               </Text>
@@ -230,72 +220,64 @@ export const ListLookupTablesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Toolbar */}
-      <Flex
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-        padding={16}
-        gap={12}
-        style={{ animation: "fadeInUp 0.3s ease 0.15s both" }}
-      >
-        <div style={{ flex: 1, maxWidth: 400 }}>
-          <TextInput
-            placeholder="Search tables by name or path…"
-            value={searchTerm}
-            onChange={(val) => setSearchTerm(val ?? "")}
-          />
-        </div>
-        <Button variant="default" onClick={refresh}>
-          Refresh
-        </Button>
-      </Flex>
+      {/* Split layout: sidebar + detail */}
+      <Flex flexDirection="row" style={{ flex: 1, overflow: "hidden" }}>
+        {/* Left sidebar */}
+        <LookupTreeSidebar
+          tables={tables}
+          selectedPath={selectedPath}
+          onSelect={setSelectedPath}
+          onAction={handleTreeAction}
+          loading={loading}
+        />
 
-      {/* Content area */}
-      <Flex
-        flexDirection="column"
-        padding={16}
-        style={{ flex: 1, animation: "fadeInUp 0.4s ease 0.2s both" }}
-      >
-        {loading && <LoadingOverlay message="Loading lookup tables…" />}
-
-        {error && !loading && (
-          <EmptyState
-            title="Error loading tables"
-            message={error}
-            action={
-              <Button variant="default" onClick={refresh}>
-                Retry
-              </Button>
-            }
-          />
-        )}
-
-        {!loading && !error && tables.length === 0 && (
-          <EmptyState
-            title="No lookup tables found"
-            message={
-              searchTerm
-                ? `No tables match "${searchTerm}". Try a different search.`
-                : "Get started by creating your first lookup table."
-            }
-            action={
-              !searchTerm ? (
-                <Button variant="accent" onClick={() => navigate("/upload")}>
-                  + Create Lookup Table
+        {/* Right detail panel */}
+        <Flex
+          flexDirection="column"
+          style={{
+            flex: 1,
+            overflow: "auto",
+            padding: 20,
+          }}
+        >
+          {error && (
+            <EmptyState
+              title="Error loading tables"
+              message={error}
+              action={
+                <Button variant="default" onClick={refresh}>
+                  Retry
                 </Button>
-              ) : undefined
-            }
-          />
-        )}
+              }
+            />
+          )}
 
-        {!loading && !error && tables.length > 0 && (
-          <div className="table-wrapper">
-            <DataTable data={tables} columns={columns} sortable resizable fullWidth>
-              <DataTable.Pagination defaultPageSize={20} />
-            </DataTable>
-          </div>
-        )}
+          {!error && !selectedPath && (
+            <Flex
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              gap={12}
+              style={{ flex: 1, opacity: 0.5 }}
+            >
+              <IconClipboard size={32} color="var(--ltm-subtle-text)" />
+              <Text style={{ fontSize: 14 }}>
+                Select a lookup table from the tree to view its data
+              </Text>
+            </Flex>
+          )}
+
+          {!error && selectedPath && (
+            <TableDetailPanel
+              filePath={selectedPath}
+              table={tables.find((t) => t.filePath === selectedPath)}
+              rows={rows}
+              totalCount={totalCount}
+              loading={previewLoading}
+              error={previewError}
+            />
+          )}
+        </Flex>
       </Flex>
 
       {/* Delete confirmation */}
@@ -318,6 +300,13 @@ export const ListLookupTablesPage: React.FC = () => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
