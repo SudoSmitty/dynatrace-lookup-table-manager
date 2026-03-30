@@ -126,6 +126,7 @@ export type DplType =
   | "LD"
   | "DATA"
   | "STRING"
+  | "STRING_ARRAY"
   | "SQS"
   | "DQS"
   | "CSVSQS"
@@ -259,8 +260,7 @@ export async function inferColumns(
     case "jsonl":
       return inferFromJsonl(text);
     case "xml":
-      // XML inference is complex; fall back to generic LD for all fields.
-      return [];
+      return inferFromXml(text);
   }
 }
 
@@ -322,9 +322,22 @@ function parseCSVRow(line: string): string[] {
 function inferFromJson(text: string): InferredColumn[] {
   try {
     const parsed = JSON.parse(text);
-    const arr: Record<string, unknown>[] = Array.isArray(parsed)
-      ? parsed
-      : [parsed];
+    let arr: Record<string, unknown>[];
+    if (Array.isArray(parsed)) {
+      arr = parsed;
+    } else if (typeof parsed === "object" && parsed !== null) {
+      // If the JSON is a wrapper object with a single key containing an array,
+      // unwrap it (e.g. { "records": [ {...}, {...} ] })
+      const values = Object.values(parsed);
+      const arrayVal = values.find((v) => Array.isArray(v));
+      if (arrayVal && Array.isArray(arrayVal) && arrayVal.length > 0 && typeof arrayVal[0] === "object") {
+        arr = arrayVal as Record<string, unknown>[];
+      } else {
+        arr = [parsed];
+      }
+    } else {
+      arr = [parsed];
+    }
     return inferFromRecords(arr.slice(0, MAX_SAMPLE_ROWS));
   } catch {
     return [];
@@ -347,6 +360,108 @@ function inferFromJsonl(text: string): InferredColumn[] {
     }
   }
   return inferFromRecords(records);
+}
+
+// ── XML ────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse XML and extract repeating elements as flat records for preview.
+ * Uses the same logic as convertXmlToJsonl to show what will be uploaded.
+ */
+function inferFromXml(text: string): InferredColumn[] {
+  const records = xmlToFlatRecords(text);
+  if (records.length === 0) return [];
+  return inferFromRecords(records);
+}
+
+/**
+ * Convert XML text to JSONL string for upload.
+ * Finds the first repeating element (the "row"), flattens each occurrence
+ * into a flat JSON object, and joins them as newline-delimited JSON.
+ * Returns null if the XML cannot be parsed or has no repeating elements.
+ */
+export function convertXmlToJsonl(text: string): string | null {
+  const records = xmlToFlatRecords(text);
+  if (records.length === 0) return null;
+  return records.map((r) => JSON.stringify(r)).join("\n");
+}
+
+/**
+ * Parse XML and extract repeating elements as an array of flat records.
+ */
+function xmlToFlatRecords(text: string): Record<string, string>[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "application/xml");
+    if (doc.querySelector("parsererror")) return [];
+
+    const repeating = findRepeatingElement(doc.documentElement);
+    if (!repeating) return [];
+
+    const { parent, tagName } = repeating;
+    const elements = Array.from(parent.children).filter(
+      (el) => el.tagName === tagName
+    );
+
+    return elements.map((el) => {
+      const record: Record<string, string> = {};
+      flattenElementToRecord(el, "", record);
+      return record;
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Walk the tree to find the first element tag that repeats among its
+ * siblings — this is the "row" element in tabular XML data.
+ */
+function findRepeatingElement(
+  node: Element
+): { parent: Element; tagName: string } | null {
+  const tagCounts = new Map<string, number>();
+  for (const child of Array.from(node.children)) {
+    tagCounts.set(child.tagName, (tagCounts.get(child.tagName) ?? 0) + 1);
+  }
+  for (const [tag, count] of tagCounts) {
+    if (count > 1) return { parent: node, tagName: tag };
+  }
+  // Recurse into wrapper layers
+  for (const child of Array.from(node.children)) {
+    const found = findRepeatingElement(child);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Flatten a single XML element into a flat key-value record.
+ * Leaf text becomes the value; nested elements use dot-separated keys.
+ */
+function flattenElementToRecord(
+  el: Element,
+  prefix: string,
+  out: Record<string, string>,
+): void {
+  // Attributes
+  for (const attr of Array.from(el.attributes)) {
+    const key = prefix ? `${prefix}.@${attr.name}` : `@${attr.name}`;
+    out[key] = attr.value;
+  }
+
+  if (el.children.length === 0) {
+    // Leaf element — text content becomes the value
+    const text = (el.textContent ?? "").trim();
+    const key = prefix || el.tagName;
+    out[key] = text;
+  } else {
+    // Recurse into child elements
+    for (const child of Array.from(el.children)) {
+      const childKey = prefix ? `${prefix}.${child.tagName}` : child.tagName;
+      flattenElementToRecord(child, childKey, out);
+    }
+  }
 }
 
 // ── shared record-based inference (JSON / JSONL) ───────────────────────────

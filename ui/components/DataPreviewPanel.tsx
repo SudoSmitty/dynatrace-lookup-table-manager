@@ -21,6 +21,10 @@ interface DataPreviewPanelProps {
   onTypeChange: (colIndex: number, newType: DplType) => void;
   /** The generated parse pattern string (shown read-only). */
   parsePattern: string;
+  /** When true, hides type-override dropdowns (used for JSON/XML previews). */
+  readOnly?: boolean;
+  /** Optional hint text shown below the parse pattern. */
+  formatHint?: string;
 }
 
 export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
@@ -28,6 +32,8 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
   loading = false,
   onTypeChange,
   parsePattern,
+  readOnly = false,
+  formatHint,
 }) => {
   if (loading) {
     return (
@@ -43,12 +49,12 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
   return (
     <Flex flexDirection="column" gap={16} style={{ animation: "fadeInUp 0.4s ease both" }}>
       <Heading level={6}>
-        <span className="gradient-text">Detected Columns &amp; DPL Types</span>
+        <span className="gradient-text">{readOnly ? "Data Preview" : "Detected Columns & DPL Types"}</span>
       </Heading>
       <Text style={{ fontSize: 12, color: "var(--dt-colors-text-neutral-default)" }}>
-        Each column's data type has been auto-detected from sample values.
-        All columns import as LD (line data) by default for maximum compatibility.
-        Switch any column to a stricter type if needed.
+        {readOnly
+          ? "Preview of fields and sample values detected from the uploaded file."
+          : "Each column\u2019s data type has been auto-detected from sample values. All columns import as LD (line data) by default for maximum compatibility. Switch any column to a stricter type if needed."}
       </Text>
 
       {/* Column table */}
@@ -76,8 +82,8 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
               }}
             >
               <th style={thStyle}>Column</th>
-              <th style={thStyle}>Detected</th>
-              <th style={thStyle}>Import As</th>
+              {!readOnly && <th style={thStyle}>Detected</th>}
+              {!readOnly && <th style={thStyle}>Import As</th>}
               <th style={thStyle}>Sample Values</th>
             </tr>
           </thead>
@@ -87,6 +93,7 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
                 <td style={tdStyle}>
                   <Text style={{ fontWeight: 600 }}>{col.name}</Text>
                 </td>
+                {!readOnly && (
                 <td style={tdStyle}>
                   <Text
                     style={{
@@ -102,6 +109,8 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
                     {col.detectedType}
                   </Text>
                 </td>
+                )}
+                {!readOnly && (
                 <td style={{ ...tdStyle, minWidth: 160 }}>
                   <Select
                     value={col.dplType}
@@ -120,6 +129,7 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
                     </Select.Content>
                   </Select>
                 </td>
+                )}
                 <td style={tdStyle}>
                   <Text
                     style={{
@@ -156,6 +166,11 @@ export const DataPreviewPanel: React.FC<DataPreviewPanelProps> = ({
         >
           {parsePattern}
         </div>
+        {formatHint && (
+          <Text style={{ fontSize: 11, color: "var(--dt-colors-text-neutral-default)", fontStyle: "italic" }}>
+            {formatHint}
+          </Text>
+        )}
       </Flex>
     </Flex>
   );
