@@ -16,6 +16,7 @@ import { Flex } from "@dynatrace/strato-components-preview/layouts";
 import { Heading, Text } from "@dynatrace/strato-components/typography";
 
 import { deleteLookupTable } from "../api";
+import { IconFile, IconHash, IconEye } from "../components/Icons";
 import { useLookupPreview, useNotifications } from "../hooks";
 import {
   AppHeader,
@@ -149,16 +150,16 @@ export const LookupTableDetailPage: React.FC = () => {
         {/* Metadata bar */}
         <div className="meta-bar">
           <div className="meta-card meta-card--purple">
-            <MetaChip label="File Path" value={filePath} icon="📁" />
+            <MetaChip label="File Path" value={filePath} icon={<IconFile size={18} color="var(--ltm-accent-1)" />} />
           </div>
           <div className="meta-card meta-card--teal">
-            <MetaChip label="Total Records" value={String(totalCount)} icon="📊" />
+            <MetaChip label="Total Records" value={String(totalCount)} icon={<IconHash size={18} color="var(--ltm-accent-2)" />} />
           </div>
           <div className="meta-card meta-card--amber">
             <MetaChip
               label="Preview Rows"
               value={`${rows.length}${rows.length >= 100 ? " (limited)" : ""}`}
-              icon="👁️"
+              icon={<IconEye size={18} color="#f59e0b" />}
             />
           </div>
         </div>
@@ -221,13 +222,13 @@ export const LookupTableDetailPage: React.FC = () => {
 // Sub-components & helpers
 // ---------------------------------------------------------------------------
 
-const MetaChip: React.FC<{ label: string; value: string; icon?: string }> = ({
+const MetaChip: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({
   label,
   value,
   icon,
 }) => (
   <Flex flexDirection="row" gap={8} alignItems="center">
-    {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+    {icon && <span style={{ flexShrink: 0, display: "flex" }}>{icon}</span>}
     <Flex flexDirection="column" gap={2}>
       <Text
         style={{

@@ -7,7 +7,7 @@ environmentUrl: "${ENVIRONMENT_URL}"
 app:
   id: "my.lookup.table.manager"
   name: "Lookup Table Manager"
-  version: "1.0.0"
+  version: "1.2.0"
   description: >
     A polished Dynatrace AppEngine application for managing
     Grail lookup tables. List, create, update, and delete

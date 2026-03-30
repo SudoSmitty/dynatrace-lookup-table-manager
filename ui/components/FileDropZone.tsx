@@ -103,7 +103,7 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
             transform: dragActive ? "scale(1.15)" : "scale(1)",
           }}
         >
-          {selectedFileName ? "✅" : "📂"}
+          {selectedFileName ? "✓" : "↑"}
         </div>
         {selectedFileName ? (
           <Flex flexDirection="column" alignItems="center" gap={4}>

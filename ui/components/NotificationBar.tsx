@@ -30,7 +30,7 @@ export const NotificationBar: React.FC<NotificationBarProps> = ({
     <div
       style={{
         position: "fixed",
-        top: 16,
+        bottom: 16,
         right: 16,
         zIndex: 9999,
         display: "flex",

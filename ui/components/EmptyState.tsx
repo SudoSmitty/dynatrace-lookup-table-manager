@@ -7,6 +7,7 @@
 import React from "react";
 import { Flex } from "@dynatrace/strato-components-preview/layouts";
 import { Heading, Text } from "@dynatrace/strato-components/typography";
+import { IconClipboard } from "./Icons";
 
 interface EmptyStateProps {
   title: string;
@@ -40,7 +41,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         animation: "float 3s ease-in-out infinite",
       }}
     >
-      📋
+      <IconClipboard size={28} color="var(--ltm-accent-1)" />
     </div>
     <Heading level={5}>
       <span className="gradient-text">{title}</span>

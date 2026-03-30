@@ -98,17 +98,16 @@ function extractName(filePath: string): string {
 // Preview (View Detail)
 // ---------------------------------------------------------------------------
 
-/** Load the first N rows of a lookup table via DQL. */
+/** Load all rows of a lookup table via DQL. */
 export async function previewLookupTable(
-  filePath: string,
-  limit = 100
+  filePath: string
 ): Promise<LookupRow[]> {
-  const dql = `load "${filePath}" | limit ${limit}`;
+  const dql = `load "${filePath}"`;
 
   const raw = await queryFetch<Record<string, unknown>>({
     query: dql,
-    requestTimeoutMilliseconds: 30_000,
-    maxResultRecords: limit,
+    requestTimeoutMilliseconds: 60_000,
+    maxResultRecords: 50_000,
   });
 
   return extractRecords<LookupRow>(raw);
