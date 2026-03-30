@@ -4,6 +4,7 @@ A polished Dynatrace AppEngine app for creating, viewing, updating, and deleting
 
 ---
 <img width="2750" height="1289" alt="image" src="https://github.com/user-attachments/assets/e6dd6985-bab4-4e42-99d0-b197d0b84ae5" />
+
 ---
 
 ## Features
